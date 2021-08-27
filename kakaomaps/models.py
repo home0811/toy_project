@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 class Map(models.Model):
     id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255, null=True)
     type = models.CharField(max_length=100, null=False, default="polyline")
     coordinate = models.CharField(max_length=100, null=False, default="wgs84")
     strokeColor = models.CharField(max_length=100, null=True)

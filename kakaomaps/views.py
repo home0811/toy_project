@@ -25,7 +25,6 @@ def kakaomaps(req):
         if mapSerializer[i]["type"] == "polyline":
             del mapSerializer[i]["fillColor"]
             del mapSerializer[i]["fillOpacity"]
-            print(mapSerializer[i])
 
     context = { "map": mapSerializer }
     return render(req, 'kakaomap.html', context)
@@ -41,7 +40,9 @@ class StorageView(APIView):
             point_arr = []
             for i in data:
                 data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
-                if len(data_arr) == 3:
+                if len(data_arr) == 1:
+                    setattr(map, data_arr[0], data[i])
+                elif len(data_arr) == 3:
                     # data_arr[3] == "type"
                     setattr(map, data_arr[2], data[i])
                 elif len(data_arr) == 4:
@@ -63,6 +64,11 @@ class StorageView(APIView):
             print(e)
         
         return HttpResponse(status=201)
+
+    
+    def put(self,req):
+
+        return HttpResponse("")
 
     def delete(self, req):
         """
