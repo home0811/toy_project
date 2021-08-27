@@ -17,8 +17,10 @@ from django.contrib import admin
 from django.urls import path
 from kakaomaps import views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('map/', views.kakaomaps, name='kakaomap'),
-    path('', views.main_introduction, name='main_introduction')
+    path('', views.main_introduction, name='main_introduction'),
+    path('api/storage/', views.StorageView.as_view(), name='storage'),
 ]
