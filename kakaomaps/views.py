@@ -33,28 +33,27 @@ class StorageView(APIView):
         """        
         try:
             data = req.data
-            print(data)
-            # map = Map.objects.create()
-            # point_arr = []
-            # for i in data:
-            #     data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
-            #     if len(data_arr) == 3:
-            #         # data_arr[3] == "type"
-            #         setattr(map, data_arr[2], data[i])
-            #     elif len(data_arr) == 4:
-            #         # data_arr[3] == "coordinate"
-            #         setattr(map, data_arr[3], data[i])
-            #     else:
-            #         # data_arr[3] == sequence number
-            #         if len(point_arr) <= int(data_arr[3]) : point_arr.append([])
-            #         point_arr[int(data_arr[3])].append(data[i])  
-            # map.save()
+            map = Map.objects.create()
+            point_arr = []
+            for i in data:
+                data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
+                if len(data_arr) == 3:
+                    # data_arr[3] == "type"
+                    setattr(map, data_arr[2], data[i])
+                elif len(data_arr) == 4:
+                    # data_arr[3] == "coordinate"
+                    setattr(map, data_arr[3], data[i])
+                else:
+                    # data_arr[3] == sequence number
+                    if len(point_arr) <= int(data_arr[3]) : point_arr.append([])
+                    point_arr[int(data_arr[3])].append(data[i])  
+            map.save()
             
-            # sequence = 0
-            # for point in point_arr:
-            #     point = Point.objects.create(map_id=map, sequence=sequence, x=point[0], y=point[1])
-            #     point.save()
-            #     sequence += 1
+            sequence = 0
+            for point in point_arr:
+                point = Point.objects.create(map_id=map, sequence=sequence, x=point[0], y=point[1])
+                point.save()
+                sequence += 1
                         
         except Exception as e:
             print(e)
@@ -62,3 +61,15 @@ class StorageView(APIView):
                 
         return redirect('kakaomap')
 
+    def delete(self, req):
+        """
+            카카오맵 데이터 저장
+        """        
+        id = req.GET.get("id")
+        try:
+            map = Map.objects.get(id=id)
+            map.delete()
+        except Exception as e:
+            print(e)
+
+        return redirect('kakaomap')
