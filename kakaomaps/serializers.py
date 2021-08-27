@@ -30,4 +30,7 @@ class MapSerializer(serializers.ModelSerializer):
         return float(obj.strokeOpacity)
 
     def get_fillOpacity(self, obj):
-        return float(obj.fillOpacity)
+        if obj.type == "polygon":
+            return float(obj.fillOpacity)
+        else:
+            return obj.fillOpacity

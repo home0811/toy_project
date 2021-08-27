@@ -22,6 +22,10 @@ def kakaomaps(req):
 
     for i in range(len(mapSerializer)):
         mapSerializer[i] = dict(mapSerializer[i])
+        if mapSerializer[i]["type"] == "polyline":
+            del mapSerializer[i]["fillColor"]
+            del mapSerializer[i]["fillOpacity"]
+            print(mapSerializer[i])
 
     context = { "map": mapSerializer }
     return render(req, 'kakaomap.html', context)
@@ -58,12 +62,11 @@ class StorageView(APIView):
         except Exception as e:
             print(e)
         
-                
-        return redirect('kakaomap')
+        return HttpResponse(status=201)
 
     def delete(self, req):
         """
-            카카오맵 데이터 저장
+            카카오맵 데이터 삭제
         """        
         id = req.GET.get("id")
         try:

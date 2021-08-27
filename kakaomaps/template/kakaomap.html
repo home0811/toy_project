@@ -211,7 +211,9 @@
                 type: 'POST',
                 data: { data },
                 url: `{% url 'storage' %}`,
-                success: function (res) {},
+                success: function (res) {
+                  location.reload();
+                },
               });
             }
 
@@ -226,6 +228,7 @@
 
             // 저장한 Map 데이터를 불러오는 함수입니다
             function addMap(data) {
+              console.log(1);
               if (data.type == 'polygon') {
                 drawPolygon(data);
               } else {
