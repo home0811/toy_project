@@ -90,6 +90,9 @@
                 </p>
               </div>
             </div>
+            <div class="alert alert-danger" role="alert">
+              This is a danger alert with <a href="#" class="alert-link">an example link</a>. Give it a click if you like.
+            </div>
           </div>
           <script
             type="text/javascript"
@@ -247,7 +250,7 @@
 
             // 저장한 Map 데이터를 불러오는 함수입니다
             function addMap(data) {
-              console.log(1);
+              removeOverlays();
               if (data.type == 'polygon') {
                 drawPolygon(data);
               } else {
