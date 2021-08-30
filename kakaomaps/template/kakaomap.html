@@ -85,7 +85,7 @@
                 <p class="modes">
                   <button type="button" class="btn btn-primary btn-sm" onclick="selectOverlay('POLYLINE')">선</button>
                   <button type="button" class="btn btn-primary btn-sm" onclick="selectOverlay('POLYGON')">다각형</button>
-                  <button id="storage" type="button" class="btn btn-primary btn-sm" onclick="dataStorage()" disabled>저장하기</button>
+                  <button id="storage" type="button" class="btn btn-primary btn-sm" onclick="dataStorage()" value="create" disabled>저장하기</button>
                   <input type="text" class="form-control" id="map-name" disabled />
                 </p>
               </div>
@@ -142,7 +142,8 @@
 
             // 위에 작성한 옵션으로 Drawing Manager를 생성합니다
             var manager = new kakao.maps.drawing.DrawingManager(options),
-              drawOverlays = [];
+              drawOverlays = [],
+              updateId = '';
 
             // 저장하기 버튼
             var storageBtn = document.getElementById('storage');
@@ -200,35 +201,54 @@
             // 그리기를 취소할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('cancel', function (e) {
               storageBtn.disabled = true;
+              storageBtn.innerText = '저장하기';
+              storageBtn.value = 'create';
               nameInput.disabled = true;
+              nameInput.value = '';
             });
 
             // 그리기 요소를 삭제할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('remove', function (e) {
               storageBtn.disabled = true;
+              storageBtn.innerText = '저장하기';
+              storageBtn.value = 'create';
               nameInput.disabled = true;
+              nameInput.value = '';
             });
 
             // 그리기 요소를 선택할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('select', function (e) {
               storageBtn.disabled = true;
+              storageBtn.innerText = '저장하기';
+              storageBtn.value = 'create';
               nameInput.disabled = true;
+              nameInput.value = '';
             });
 
             // 그려진 객체 데이터를 DB에 저장하는 함수입니다
             function dataStorage() {
+              var type = storage.value;
               var name = nameInput.value;
               var data = manager.getData();
-              data.name = name;
-
-              $.ajax({
-                type: 'POST',
-                data: { data },
-                url: `{% url 'storage' %}`,
-                success: function (res) {
-                  location.reload();
-                },
-              });
+              if (type == 'create') {
+                $.ajax({
+                  type: 'POST',
+                  data: { data },
+                  url: `{% url 'storage' %}?name=${name}`,
+                  success: function (res) {
+                    location.reload();
+                  },
+                });
+              } else {
+                $.ajax({
+                  type: 'PUT',
+                  data: { data },
+                  url: `{% url 'storage' %}?name=${name}&id=${updateId}`,
+                  success: function (res) {
+                    location.reload();
+                  },
+                });
+              }
             }
 
             // DB에서 Map을 삭제하는 함수입니다.
@@ -244,6 +264,9 @@
 
             // 저장한 Map 데이터를 불러오는 함수입니다
             function addMap(data) {
+              // 그리기 중이면 그리기를 취소합니다
+              manager.cancel();
+
               // 기존의 Map 객체들 삭제
               removeOverlays();
 
@@ -252,6 +275,13 @@
               } else {
                 drawPolyline(data);
               }
+
+              updateId = data.id;
+              storageBtn.disabled = false;
+              storageBtn.innerText = '수정하기';
+              storageBtn.value = 'update';
+              nameInput.disabled = false;
+              nameInput.value = data.name;
             }
 
             // Drawing Manager에서 가져온 데이터 중 선을 아래 지도에 표시하는 함수입니다

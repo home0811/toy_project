@@ -36,13 +36,12 @@ class StorageView(APIView):
         """        
         try:
             data = req.data
-            map = Map.objects.create()
+            name = req.GET.get("name")
+            map = Map.objects.create(name=name)
             point_arr = []
             for i in data:
                 data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
-                if len(data_arr) == 1:
-                    setattr(map, data_arr[0], data[i])
-                elif len(data_arr) == 3:
+                if len(data_arr) == 3:
                     # data_arr[3] == "type"
                     setattr(map, data_arr[2], data[i])
                 elif len(data_arr) == 4:
@@ -67,6 +66,37 @@ class StorageView(APIView):
 
     
     def put(self,req):
+        data = req.data
+        id = req.GET.get("id")
+        name = req.GET.get("name")
+
+        try:
+            map = Map.objects.get(id=id)
+            setattr(map, 'name', name)
+            
+            points = Point.objects.filter(map_id=map)
+            print(points)
+            for point in points:
+                point.delete()
+
+            point_arr = []
+            for i in data:
+                data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
+                if len(data_arr) == 5:
+                    # data_arr[3] == sequence number
+                    if len(point_arr) <= int(data_arr[3]) : point_arr.append([])
+                    point_arr[int(data_arr[3])].append(data[i])  
+                    
+            map.save()
+            
+            sequence = 0
+            for point in point_arr:
+                point = Point.objects.create(map_id=map, sequence=sequence, x=point[0], y=point[1])
+                point.save()
+                sequence += 1
+
+        except Exception as e:
+            print(e)
 
         return HttpResponse("")
 
