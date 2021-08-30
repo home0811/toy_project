@@ -90,9 +90,6 @@
                 </p>
               </div>
             </div>
-            <div class="alert alert-danger" role="alert">
-              This is a danger alert with <a href="#" class="alert-link">an example link</a>. Give it a click if you like.
-            </div>
           </div>
           <script
             type="text/javascript"
@@ -145,24 +142,34 @@
 
             // 위에 작성한 옵션으로 Drawing Manager를 생성합니다
             var manager = new kakao.maps.drawing.DrawingManager(options),
-              overlays = [],
               drawOverlays = [];
+
+            // 저장하기 버튼
+            var storageBtn = document.getElementById('storage');
+
+            // 이름 입력 박스
+            var nameInput = document.getElementById('map-name');
 
             // 지도에 그려진 도형이 있다면 모두 지웁니다
             function removeOverlays() {
               // 추가된 도형 삭제
-              var len = overlays.length,
-                i = 0;
+              var data = manager.getOverlays();
+              var polygonLen = data.polygon.length,
+                polylineLen = data.polyline.length,
+                i = 0,
+                j = 0;
 
-              for (; i < len; i++) {
-                overlays[i].setMap(null);
+              for (; i < polygonLen; i++) {
+                data.polygon[i].remove();
               }
 
-              overlays = [];
+              for (; j < polylineLen; j++) {
+                data.polyline[j].remove();
+              }
 
               // 그려진 도형 삭제
-              var len = drawOverlays.length,
-                i = 0;
+              var len = drawOverlays.length;
+              i = 0;
 
               for (; i < len; i++) {
                 manager.remove(drawOverlays[i]);
@@ -184,10 +191,7 @@
 
             // 그리기가 끝날 때 저장하기 버튼을 활성화합니다
             manager.addListener('drawend', function (data) {
-              var storageBtn = document.getElementById('storage');
               storageBtn.disabled = false;
-
-              var nameInput = document.getElementById('map-name');
               nameInput.disabled = false;
 
               drawOverlays.push(data.target);
@@ -195,34 +199,24 @@
 
             // 그리기를 취소할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('cancel', function (e) {
-              var storageBtn = document.getElementById('storage');
               storageBtn.disabled = true;
-
-              var nameInput = document.getElementById('map-name');
               nameInput.disabled = true;
             });
 
             // 그리기 요소를 삭제할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('remove', function (e) {
-              var storageBtn = document.getElementById('storage');
               storageBtn.disabled = true;
-
-              var nameInput = document.getElementById('map-name');
               nameInput.disabled = true;
             });
 
             // 그리기 요소를 선택할 경우 저장하기 버튼을 비활성화합니다
             manager.addListener('select', function (e) {
-              var storageBtn = document.getElementById('storage');
               storageBtn.disabled = true;
-
-              var nameInput = document.getElementById('map-name');
               nameInput.disabled = true;
             });
 
             // 그려진 객체 데이터를 DB에 저장하는 함수입니다
             function dataStorage() {
-              var nameInput = document.getElementById('map-name');
               var name = nameInput.value;
               var data = manager.getData();
               data.name = name;
@@ -250,7 +244,9 @@
 
             // 저장한 Map 데이터를 불러오는 함수입니다
             function addMap(data) {
+              // 기존의 Map 객체들 삭제
               removeOverlays();
+
               if (data.type == 'polygon') {
                 drawPolygon(data);
               } else {
@@ -261,38 +257,15 @@
             // Drawing Manager에서 가져온 데이터 중 선을 아래 지도에 표시하는 함수입니다
             function drawPolyline(lines) {
               var path = pointsToPath(lines.points);
-              var polyline = new kakao.maps.Polyline({
-                map: drawingMap,
-                path: path,
-                strokeColor: lines.strokeColor,
-                strokeOpacity: lines.strokeOpacity,
-                strokeStyle: lines.strokeStyle,
-                strokeWeight: lines.strokeWeight,
-              });
-
-              polyline.setMap(drawingMap);
-              overlays.push(polyline);
+              manager.put(kakao.maps.drawing.OverlayType.POLYLINE, path);
             }
 
             // Drawing Manager에서 가져온 데이터 중 다각형을 아래 지도에 표시하는 함수입니다
             function drawPolygon(polygons) {
               var path = pointsToPath(polygons.points);
-              var polygon = new kakao.maps.Polygon({
-                map: drawingMap,
-                path: path,
-                strokeColor: polygons.strokeColor,
-                strokeOpacity: polygons.strokeOpacity,
-                strokeStyle: polygons.strokeStyle,
-                strokeWeight: polygons.strokeWeight,
-                fillColor: polygons.fillColor,
-                fillOpacity: polygons.fillOpacity,
-              });
-
-              polygon.setMap(drawingMap);
-              overlays.push(polygon);
+              manager.put(kakao.maps.drawing.OverlayType.POLYGON, path);
             }
 
-            // Drawing Manager에서 가져온 데이터 중
             // 선과 다각형의 꼭지점 정보를 kakao.maps.LatLng객체로 생성하고 배열로 반환하는 함수입니다
             function pointsToPath(points) {
               var len = points.length,
