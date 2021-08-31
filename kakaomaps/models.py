@@ -21,4 +21,4 @@ class Point(models.Model):
     map_id = models.ForeignKey("Map", related_name="map", on_delete=models.CASCADE, db_column="map_id")
     sequence = models.IntegerField(null=False)
     x = models.FloatField(null=False)
-    y = models.FloatField(null=False)
+    y = models.FloatField(null=True)

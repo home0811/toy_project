@@ -22,5 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('map/', views.kakaomaps, name='kakaomap'),
     path('', views.main_introduction, name='main_introduction'),
-    path('api/storage/', views.StorageView.as_view(), name='storage'),
+    path('api/storage/', views.CrudMapView.as_view(), name='storage'),
 ]

@@ -230,6 +230,7 @@
               var type = storage.value;
               var name = nameInput.value;
               var data = manager.getData();
+              console.log(data);
               if (type == 'create') {
                 $.ajax({
                   type: 'POST',

@@ -15,7 +15,7 @@ def main_introduction(req):
 
 def kakaomaps(req):
     """
-        kakaomaps toy page
+        kakaomaps page
     """
     map = Map.objects.all().order_by("id")
     mapSerializer = MapSerializer(map, many=True).data
@@ -29,36 +29,31 @@ def kakaomaps(req):
     context = { "map": mapSerializer }
     return render(req, 'kakaomap.html', context)
 
-class StorageView(APIView):
+class CrudMapView(APIView):
     def post(self, req):
         """
-            카카오맵 데이터 저장
+            kakaomap data create
         """        
         try:
-            data = req.data
+            datas = req.data
             name = req.GET.get("name")
             map = Map.objects.create(name=name)
-            point_arr = []
-            for i in data:
-                data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
-                if len(data_arr) == 3:
-                    # data_arr[3] == "type"
-                    setattr(map, data_arr[2], data[i])
-                elif len(data_arr) == 4:
-                    # data_arr[3] == "coordinate"
-                    setattr(map, data_arr[3], data[i])
-                else:
-                    # data_arr[3] == sequence number
-                    if len(point_arr) <= int(data_arr[3]) : point_arr.append([])
-                    point_arr[int(data_arr[3])].append(data[i])  
+
+            for key in datas:
+                field = get_field(key)
+                if field : setattr(map, field, datas[key])
             map.save()
             
-            sequence = 0
-            for point in point_arr:
-                point = Point.objects.create(map_id=map, sequence=sequence, x=point[0], y=point[1])
-                point.save()
-                sequence += 1
-                        
+            for key in datas:
+                sequence_xy = get_sequence_xy(key)
+                if sequence_xy : 
+                    if sequence_xy["xy"] == "x" :
+                        point = Point.objects.create(map_id=map, sequence=sequence_xy["sequence"], x=datas[key])
+                        point.save()
+                    else:
+                        point = Point.objects.filter(map_id=map).get(sequence=sequence_xy["sequence"])
+                        setattr(point, sequence_xy["xy"], datas[key])
+                        point.save()
         except Exception as e:
             print(e)
         
@@ -66,35 +61,32 @@ class StorageView(APIView):
 
     
     def put(self,req):
-        data = req.data
+        """
+            kakaomap data update
+        """
+        datas = req.data
         id = req.GET.get("id")
         name = req.GET.get("name")
 
         try:
             map = Map.objects.get(id=id)
             setattr(map, 'name', name)
+            map.save()
             
             points = Point.objects.filter(map_id=map)
-            print(points)
             for point in points:
                 point.delete()
 
-            point_arr = []
-            for i in data:
-                data_arr = i.replace('data[', '').replace('][', ',').replace(']','').split(',')
-                if len(data_arr) == 5:
-                    # data_arr[3] == sequence number
-                    if len(point_arr) <= int(data_arr[3]) : point_arr.append([])
-                    point_arr[int(data_arr[3])].append(data[i])  
-                    
-            map.save()
-            
-            sequence = 0
-            for point in point_arr:
-                point = Point.objects.create(map_id=map, sequence=sequence, x=point[0], y=point[1])
-                point.save()
-                sequence += 1
-
+            for key in datas:
+                sequence_xy = get_sequence_xy(key)
+                if sequence_xy : 
+                    if sequence_xy["xy"] == "x" :
+                        point = Point.objects.create(map_id=map, sequence=sequence_xy["sequence"], x=datas[key])
+                        point.save()
+                    else:
+                        point = Point.objects.filter(map_id=map).get(sequence=sequence_xy["sequence"])
+                        setattr(point, sequence_xy["xy"], datas[key])
+                        point.save()
         except Exception as e:
             print(e)
 
@@ -102,7 +94,7 @@ class StorageView(APIView):
 
     def delete(self, req):
         """
-            카카오맵 데이터 삭제
+            kakaomap data delete
         """        
         id = req.GET.get("id")
         try:
@@ -112,3 +104,79 @@ class StorageView(APIView):
             print(e)
 
         return redirect('kakaomap')
+
+
+# res -> polygon, 0, points
+def divide_data(data : str):
+    """
+        - input data
+            ex)
+            'data[polygon][0][type]',
+            'data[polygon][0][points][0][x]', 
+            'data[polygon][0][points][0][y]',
+            'data[polygon][0][options][strokeColor]', 
+        - output
+            ex)
+            res -> polygon,0,type
+    """
+    arr = data.replace('data[', '').replace('][', ',').replace(']','').split(',')
+    return arr
+
+
+
+def get_field(keys : str):
+    """
+        - input data 
+            ex)
+            'data[polygon][0][type]': ['polygon'], 
+            'data[polygon][0][points][0][x]': ['126.5684017969731'], 
+            'data[polygon][0][points][0][y]': ['33.45302806477297'], 
+            'data[polygon][0][points][1][x]': ['126.5720582386904'], 
+            'data[polygon][0][points][1][y]': ['33.45313089868531'], 
+            'data[polygon][0][points][2][x]': ['126.56680169026187'], 
+            'data[polygon][0][points][2][y]': ['33.45036276092556'], 
+            'data[polygon][0][points][3][x]': ['126.57096169322682'], 
+            'data[polygon][0][points][3][y]': ['33.45083704161905'], 
+            'data[polygon][0][coordinate]': ['wgs84'], 
+            'data[polygon][0][options][strokeColor]': ['#39f'], 
+            'data[polygon][0][options][strokeWeight]': ['3'], 
+            'data[polygon][0][options][strokeStyle]': ['solid'], 
+            'data[polygon][0][options][strokeOpacity]': ['1'], 
+            'data[polygon][0][options][fillColor]': ['#39f'], 
+            'data[polygon][0][options][fillOpacity]': ['0.5']
+        - output data
+            key
+    """
+    arr_key = divide_data(keys)
+    type = arr_key[2]
+    if type == "type" or type == "coordinate" : return type
+    elif type == "options": return arr_key[3]
+    return False
+
+def get_sequence_xy(keys : str):
+    """
+        - input data 
+            ex)
+            'data[polygon][0][type]': ['polygon'], 
+            'data[polygon][0][points][0][x]': ['126.5684017969731'], 
+            'data[polygon][0][points][0][y]': ['33.45302806477297'], 
+            'data[polygon][0][points][1][x]': ['126.5720582386904'], 
+            'data[polygon][0][points][1][y]': ['33.45313089868531'], 
+            'data[polygon][0][points][2][x]': ['126.56680169026187'], 
+            'data[polygon][0][points][2][y]': ['33.45036276092556'], 
+            'data[polygon][0][points][3][x]': ['126.57096169322682'], 
+            'data[polygon][0][points][3][y]': ['33.45083704161905'], 
+            'data[polygon][0][coordinate]': ['wgs84'], 
+            'data[polygon][0][options][strokeColor]': ['#39f'], 
+            'data[polygon][0][options][strokeWeight]': ['3'], 
+            'data[polygon][0][options][strokeStyle]': ['solid'], 
+            'data[polygon][0][options][strokeOpacity]': ['1'], 
+            'data[polygon][0][options][fillColor]': ['#39f'], 
+            'data[polygon][0][options][fillOpacity]': ['0.5']
+        - output data
+            sequence, x or y
+    """
+    arr_key = divide_data(keys)
+    type = arr_key[2]
+    if type == "points": return {"sequence":arr_key[3], "xy":arr_key[4]}
+    else: return False
