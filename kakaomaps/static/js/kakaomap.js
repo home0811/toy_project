@@ -194,7 +194,7 @@ function buildMapListPagination(page, count, total) {
   for (let i = first_page; i <= last_page; i++) arrPage.push(i);
 
   let pagination = `<nav aria-label="Page navigation example">
-                      <ul class="pagination">
+                      <ul class="pagination pagination-sm" style="justify-content: center">
                         <li class="page-item">
                           <button id="first-page" class="page-link" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>

@@ -1,12 +1,9 @@
 from django.shortcuts import render,  redirect
 from django.http import HttpResponse
-from rest_framework import serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Map, Point
 from .serializers import MapSerializer
-from collections import OrderedDict
-
 
 def main_introduction(req):
     """
@@ -191,4 +188,3 @@ def get_sequence_xy(keys : str):
     type = arr_key[2]
     if type == "points": return {"sequence":arr_key[3], "xy":arr_key[4]}
     else: return False
-
