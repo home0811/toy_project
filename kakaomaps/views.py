@@ -18,17 +18,7 @@ def kakaomaps(req):
     """
         kakaomaps page
     """
-    map = Map.objects.all().order_by("id")
-    mapSerializer = MapSerializer(map, many=True).data
-
-    for i in range(len(mapSerializer)):
-        mapSerializer[i] = dict(mapSerializer[i])
-        if mapSerializer[i]["type"] == "polyline":
-            del mapSerializer[i]["fillColor"]
-            del mapSerializer[i]["fillOpacity"]
-
-    context = { "map": mapSerializer }
-    return render(req, 'kakaomap.html', context)
+    return render(req, 'kakaomap.html')
 
 class CrudMapView(APIView):
     def get(self, req):
