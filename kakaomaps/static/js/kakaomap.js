@@ -1,6 +1,7 @@
 let backEndServerAddress = 'http://192.168.0.111:8000/';
 // url 에서 parameter 추출
 
+// url parameter 가져오는 함수
 function getParam(sname) {
   let params = location.search.substr(location.search.indexOf('?') + 1);
   let sval = '';
@@ -88,6 +89,7 @@ window.addEventListener('DOMContentLoaded', function () {
   mapGetRequest(page, count);
 });
 
+// 맵리스트 추가
 function buildMapList(map) {
   let div = document.getElementById('map-list');
 
@@ -98,7 +100,6 @@ function buildMapList(map) {
     }
   }
 
-  // map-list 추가
   for (let i = 0; i < map.length; i++) {
     div.innerHTML += getRow(map[i].name, map[i].id);
   }
@@ -108,7 +109,7 @@ function buildMapList(map) {
   }
 }
 
-//
+// 맵리스트 html 추가
 function getRow(title, id) {
   return `
    <div class="row">
@@ -123,7 +124,7 @@ function getRow(title, id) {
     </div>`;
 }
 
-// param map
+// 맵리스트 onClick event 추가
 function addMapListEvent(map) {
   let mapBtn = document.getElementById(`map-button-${map.id}-${map.name}`);
   mapBtn.addEventListener('click', () => addMap(map));
@@ -132,22 +133,27 @@ function addMapListEvent(map) {
   removeBtn.addEventListener('click', () => mapDeleteRequest(map.id));
 }
 
+// 다음페이지 true, false 판별
 function isNext(lastPage, total) {
   return lastPage < total ? true : false;
 }
 
+// 이전페이지 true, false 판별
 function isPrev(firstPage) {
   return firstPage > 1 ? true : false;
 }
 
+// 다음페이지 실행 함수
 function next(lastPage, count, total) {
   if (isNext(lastPage, total)) mapGetRequest(lastPage + 1, count);
 }
 
+// 이전페이지 실행 함수
 function prev(firstPage, count) {
   if (isPrev(firstPage)) mapGetRequest(firstPage - 1, count);
 }
 
+// 페이지네이션 onClick event 추가
 function addPageEvent(first_page, last_page, count, total, arrPage) {
   let firstPage = document.getElementById(`first-page`);
   firstPage.addEventListener('click', () => mapGetRequest(1, count));
@@ -167,6 +173,7 @@ function addPageEvent(first_page, last_page, count, total, arrPage) {
   lastPage.addEventListener('click', () => mapGetRequest(total, count));
 }
 
+// 페이지네이션 추가
 function buildMapListPagination(page, count, total) {
   let div = document.getElementById('map-list-pagination');
 
