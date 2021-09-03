@@ -1,5 +1,4 @@
 let backEndServerAddress = 'http://192.168.0.111:8000/';
-let responseData = {};
 // url 에서 parameter 추출
 
 function getParam(sname) {
@@ -32,7 +31,6 @@ function mapGetRequest(page, count) {
     type: 'GET',
     url: `${backEndServerAddress}api/storage/?page=${page}&count=${count}`,
     success: function (res) {
-      responseData = res.map;
       buildMapList(res.map);
       buildMapListPagination(page, count, res.total);
     },
@@ -63,11 +61,7 @@ function mapDeleteRequest(id) {
 
 // 저장한 Map 데이터를 불러오는 함수입니다
 function addMap(data) {
-  console.log('test');
-  console.log(data);
   // 그리기 중이면 그리기를 취소합니다
-  // data = responseData[index];
-
   manager.cancel();
 
   // 기존의 Map 객체들 삭제
@@ -129,10 +123,9 @@ function getRow(title, id) {
     </div>`;
 }
 
+// param map
 function addMapListEvent(map) {
   let mapBtn = document.getElementById(`map-button-${map.id}-${map.name}`);
-  //console.log(mapBtn);
-
   mapBtn.addEventListener('click', () => addMap(map));
 
   let removeBtn = document.getElementById(`remove-button-${map.id}-${map.name}`);
@@ -153,6 +146,25 @@ function next(lastPage, count, total) {
 
 function prev(firstPage, count) {
   if (isPrev(firstPage)) mapGetRequest(firstPage - 1, count);
+}
+
+function addPageEvent(first_page, last_page, count, total, arrPage) {
+  let firstPage = document.getElementById(`first-page`);
+  firstPage.addEventListener('click', () => mapGetRequest(1, count));
+
+  let prevPage = document.getElementById(`prev-page`);
+  prevPage.addEventListener('click', () => prev(first_page, count));
+
+  for (const p in arrPage) {
+    let middlePage = document.getElementById(`page-${arrPage[p]}`);
+    middlePage.addEventListener('click', () => mapGetRequest(arrPage[p], count));
+  }
+
+  let nextPage = document.getElementById(`next-page`);
+  nextPage.addEventListener('click', () => next(last_page, count, total));
+
+  let lastPage = document.getElementById(`last-page`);
+  lastPage.addEventListener('click', () => mapGetRequest(total, count));
 }
 
 function buildMapListPagination(page, count, total) {
@@ -177,33 +189,35 @@ function buildMapListPagination(page, count, total) {
   let pagination = `<nav aria-label="Page navigation example">
                       <ul class="pagination">
                         <li class="page-item">
-                          <button class="page-link" onClick="mapGetRequest(1, ${count})" aria-label="Previous">
+                          <button id="first-page" class="page-link" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                           </button>
                         </li>
                         <li class="page-item">
-                          <button class="page-link" onClick="prev(${first_page}, ${count})" aria-label="Next">
+                          <button id="prev-page" class="page-link">
                             <span aria-hidden="true">&lsaquo;</span>
                           </button>
                         </li>`;
 
   for (const p in arrPage) {
-    pagination += `<li class="page-item"><button class="page-link" onClick="mapGetRequest(${arrPage[p]}, ${count})">${arrPage[p]}</button></li>`;
+    pagination += `<li class="page-item"><button id="page-${arrPage[p]}" class="page-link">${arrPage[p]}</button></li>`;
   }
 
   pagination += `<li class="page-item">
-                  <button class="page-link" onClick="next(${last_page}, ${count}, ${total})" aria-label="Next">
+                  <button id="next-page" class="page-link">
                     <span aria-hidden="true">&rsaquo;</span>
                   </button>
                 </li>
                 <li class="page-item">
-                  <button class="page-link" onClick="mapGetRequest(${total}, ${count})" aria-label="Next">
+                  <button id="last-page" class="page-link" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
                   </button>
                 </li>
               </ul>
             </nav>`;
   div.innerHTML += pagination;
+
+  addPageEvent(first_page, last_page, count, total, arrPage);
 }
 
 // Drawing Manager로 도형을 그릴 지도 div
