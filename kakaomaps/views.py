@@ -2,6 +2,7 @@ from django.shortcuts import render,  redirect
 from django.http import HttpResponse
 from rest_framework import serializers
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from .models import Map, Point
 from .serializers import MapSerializer
 from collections import OrderedDict
@@ -30,6 +31,25 @@ def kakaomaps(req):
     return render(req, 'kakaomap.html', context)
 
 class CrudMapView(APIView):
+    def get(self, req):
+        page = int(req.GET.get("page"))
+        count = int(req.GET.get("count"))
+        map = Map.objects.all().order_by('id')[(page-1)*count:page*count]
+        total = Map.objects.count()
+        total_page = int(total/count)
+        if total % count > 0 : total_page += 1
+        if total_page < page : page = total_page
+
+        serializers = MapSerializer(map, many=True).data
+        for i in range(len(serializers)):
+            serializers[i] = dict(serializers[i])
+            if serializers[i]["type"] == "polyline":
+                del serializers[i]["fillColor"]
+                del serializers[i]["fillOpacity"]
+
+        data = {"map":serializers, "total":total_page}
+        return Response(data=data)
+
     def post(self, req):
         """
             kakaomap data create
@@ -54,6 +74,7 @@ class CrudMapView(APIView):
                         point = Point.objects.filter(map_id=map).get(sequence=sequence_xy["sequence"])
                         setattr(point, sequence_xy["xy"], datas[key])
                         point.save()
+                
         except Exception as e:
             print(e)
         
@@ -180,3 +201,4 @@ def get_sequence_xy(keys : str):
     type = arr_key[2]
     if type == "points": return {"sequence":arr_key[3], "xy":arr_key[4]}
     else: return False
+
